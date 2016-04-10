@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:hdp="http://www.springframework.org/schema/hadoop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+http://www.springframework.org/schema/beans/spring-beans.xsd 
+http://www.springframework.org/schema/context 
+http://www.springframework.org/schema/context/spring-context.xsd 
+http://www.springframework.org/schema/mvc 
+http://www.springframework.org/schema/mvc/spring-mvc.xsd
+http://www.springframework.org/schema/hadoop http://www.springframework.org/schema/hadoop/spring-hadoop.xsd
+http://www.springframework.org/schema/websocket
+http://www.springframework.org/schema/websocket/spring-websocket.xsd">
+
+
+	<mvc:annotation-driven></mvc:annotation-driven>
+	<!-- 静态资源访问 -->
+	<mvc:resources location="/bootstrap3/" mapping="/bootstrap3/**"></mvc:resources>
+	<!-- hbase配置数据源 -->
+	<hdp:configuration id="hadoopConfiguration">
+	  fs.defaultFS=hdfs://192.168.12.2:9000
+	</hdp:configuration>
+	
+	<hdp:hbase-configuration id="hbaseConfiguration" configuration-ref="hadoopConfiguration" zk-quorum="192.168.12.2" zk-port="2181"/>
+	
+	<bean id="hbaseTemplate" class="org.springframework.data.hadoop.hbase.HbaseTemplate">
+		<property name="configuration" ref="hbaseConfiguration"/>
+	</bean>
+	
+	
+	<!-- Spring MVC JSON -->
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<!-- <bean id="fastJsonHttpMessageConverter" class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter"> -->
+				<bean id="fastJsonHttpMessageConverter" class="com.hun.social.util.FastJsonHttpMessageConverter">
+				<!-- 像这里的消息转换器的实现。就是重写AbstractHttpMessageConverter<Object>里面的方法。它是用fastjson重写的。就这样，别看的源码太难 -->
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/html;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 配置视图 BeanNameViewResolver 解析器: 使用视图的名字来解析视图 -->
+	<!-- 通过 order 属性来定义视图解析器的优先级, order 值越小优先级越高 -->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="100"></property>
+	</bean>
+
+	<!-- 配置国际化资源文件 -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="i18n"></property>
+	</bean>
+
+	<!-- 配置视图解析器: 如何把 handler 方法返回值解析为实际的物理视图 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+
+
+	<!--配置文件上传 -->
+	<!-- <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"> 
+		<property name="defaultEncoding"> <value>UTF-8</value> </property> <property 
+		name="maxUploadSize"> <value>10485760</value>10M </property> <property name="maxInMemorySize"> 
+		<value>4096</value> </property> </bean> -->
+		
+	<context:component-scan base-package="com.hun.social"></context:component-scan>
+
+</beans>
